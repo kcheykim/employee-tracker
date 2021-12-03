@@ -2,6 +2,15 @@ const inquirer = require('inquirer');
 const fs = require('fs');
 const { inherits } = require('util');
 
+const mysql = require('mysql2');
+
+const db = mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: 'MyNewPass',
+    database: 'business_db'
+});
+
 function addDept() { //add a new department (name)
     inquirer.prompt([{
         type: 'input',
@@ -88,6 +97,7 @@ function init() { //prompt user to with choices they would like to preform
             'Add A Role', 'Add An Employee', 'Update An Employee Role', 'Nothing'
         ]
     }]).then(({ options }) => {
+        console.log(options);
         switch (options) { //selecting from the different choices
             case 'View All Department':
                 console.log('Testing: view all department');
