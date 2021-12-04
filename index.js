@@ -2,9 +2,7 @@ const inquirer = require('inquirer');
 const fs = require('fs');
 const { inherits } = require('util');
 
-const mysql = require('mysql2');
-
-const db = mysql.createConnection({
+const db = require('mysql2').createConnection({
     host: 'localhost',
     user: 'root',
     password: 'MyNewPass',
@@ -18,6 +16,9 @@ function addDept() { //add a new department (name)
         message: 'What is the name of the department?',
         validate: deptInput => { if (deptInput) { return true; } else { return false; } }
     }]).then(({ addDept }) => {
+        db.query(`INSERT INTO department (name)  VALUES (?)`), addDept, (err, res) => {
+            res ? viewAll(`department`) : console.log(err);
+        }
         console.log('Add a new department to the database.');
     })
 }
@@ -42,6 +43,7 @@ function addRole() { //add a new role (role, salary, which department)
             validate: belongInput => { if (belongInput) { return true; } else { return false; } }
         },
     ]).then(({ addDept }) => {
+
         console.log('Add a new role to the database.');
     })
 }
@@ -76,16 +78,29 @@ function addEmployee() { //add a new employee (first and last name, role, and ma
     })
 }
 
-function updatEmployee() { //update an employee
-    inquirer.prompt([{
-        type: 'list',
-        name: 'employee',
-        message: 'Which employee do you want to update thier role?',
-        choices: ['grabbing from database', 'list2'],
-        validate: eInput => { if (eInput) { return true; } else { return false; } }
-    }]).then(({ employee }) => {
-        console.log('Update the role of an employee to the database.');
-    })
+function updateEmployee() { //update an employee
+    db.query((`SELECT id, first_name, last_name FROM employee`), (err, res) => {
+        for (let value of res) { console.log(value); }
+        if (err) { throw err; } else {
+            inquirer.prompt([{
+                type: 'list',
+                name: 'employee',
+                message: 'Which employee do you want to update thier role?',
+                choices: res.map(res => res.id, res.first_name, res.last_name),
+                validate: eInput => { if (eInput) { return true; } else { return false; } }
+            }]).then(({ employee }) => {
+                console.log(`${employee.first_name + ' ' + employee.last_name} is being updated`);
+            })
+        }
+    });
+
+}
+
+function viewAll(table) {
+    db.query((`SELECT * FROM ${table}`), (err, res) => {
+        res ? console.table(res) : console.log(err);
+    });
+    init();
 }
 
 function init() { //prompt user to with choices they would like to preform
@@ -94,19 +109,18 @@ function init() { //prompt user to with choices they would like to preform
         name: 'options',
         message: 'What would you like to do?',
         choices: ['View All Department', 'View All Roles', 'View All Employees', 'Add A Department',
-            'Add A Role', 'Add An Employee', 'Update An Employee Role', 'Nothing'
+            'Add A Role', 'Add An Employee', 'Update An Employee Role', 'EXIT'
         ]
     }]).then(({ options }) => {
-        console.log(options);
         switch (options) { //selecting from the different choices
             case 'View All Department':
-                console.log('Testing: view all department');
+                viewAll(`department`);
                 break;
             case 'View All Roles':
-                console.log('Testing: view all roles');
+                viewAll(`role`);
                 break;
             case 'View All Employees':
-                console.log('Testing: view all employees');
+                viewAll(`employee`);
                 break;
             case 'Add A Department':
                 addDept();
@@ -118,7 +132,7 @@ function init() { //prompt user to with choices they would like to preform
                 addEmployee();
                 break;
             case 'Update An Employee Role':
-                updatEmployee();
+                updateEmployee();
                 break;
             default:
                 break;

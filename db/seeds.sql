@@ -1,9 +1,9 @@
+
 INSERT INTO department (name)
 VALUES 
     ('Developers'),
     ('Human Resources'),
     ('Business');
-
 INSERT INTO role (title, salary, department_id)
 VALUES 
     ('Full Stack Developer', 120000, 1),
@@ -21,3 +21,5 @@ VALUES
     ('Henry', 'Humor', 2, 4),
     ('Terry', 'Talkative', 1, 2),
     ('Rose', 'Rumor', 1, 2);
+
+DROP INDEX IF EXISTS ON TABLE;
