@@ -50,7 +50,8 @@ function addRole() { //add a new role (role, salary, which department)
             validate: deptIDInput => { if (deptIDInput) { return true; } else { return false; } }
         },
     ]).then(({ role, salary, deptID }) => {
-        db.query(`INSERT INTO role (title, salary, department_id ) VALUES (${role}, ${salary}, ${deptID})`),
+        console.log(role, salary, deptID);
+        db.query(`INSERT INTO role (title, salary, department_id ) VALUES ('${role}', ${salary}, ${deptID})`),
             (err, res) => { res ? console.log(`Added: ${Sales}`) : console.log(err); }
         viewAll(`role`);
     })
@@ -82,7 +83,11 @@ function addEmployee() { //add a new employee (first and last name, role, and ma
             validate: eManagerInput => { if (eManagerInput) { return true; } else { return false; } }
         }
     ]).then(({ first_name, last_name, eRole, eManager }) => {
-        console.log('Add a new employee to the database.');
+        console.log(first_name, last_name, eRole, eManager);
+        db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id ) 
+                VALUES ('${first_name}', '${last_name}', ${eRole}, ${eManager})`),
+            (err, res) => { res ? console.log(`Added: ${first_name} ${last_name}`) : console.log(err); }
+        viewAll(`employee`);
     })
 }
 
