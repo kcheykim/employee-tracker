@@ -11,24 +11,23 @@ const db = require('mysql2').createConnection({
 });
 
 function viewAll(table, indicator) { //select all from a table
-    let new_table;
-    if (indicator === 1) {
-        db.query((`SELECT * FROM ${table}`), (err, res) => {
-            console.log('\n');
-            res ? console.table(res) : console.log(err);
-            init();
-        });
-    } else {
-        switch (table) { //selecting from the different choices
-            case `role`:
-                db.query((`SELECT role.id, role.title, role.salary, department.name AS department 
+    switch (table) { //selecting from the different choices
+        case `department`:
+            db.query((`SELECT * FROM department`), (err, res) => {
+                console.log('\n');
+                res ? console.table(res) : console.log(err);
+                init();
+            });
+        case `role`:
+            db.query((`SELECT role.id, role.title, role.salary, department.name AS department 
                 FROM ${table} LEFT JOIN department ON role.department_id = department.id`), (err, res) => {
-                    console.log('\n');
-                    res ? console.table(res) : console.log(err);
-                    init();
-                });
-                break;
-            case `employee`:
+                console.log('\n');
+                res ? console.table(res) : console.log(err);
+                init();
+            });
+            break;
+        case `employee`:
+            if (indicator === 1) {
                 db.query((`SELECT e.id, e.first_name, e.last_name, department.name AS department, 
                 role.title, role.salary, CONCAT(m.first_name, ' ', m.last_name) AS manager
                     FROM ${table} e JOIN role ON e.role_id = role.id
@@ -38,10 +37,32 @@ function viewAll(table, indicator) { //select all from a table
                     res ? console.table(res) : console.log(err);
                     init();
                 });
-                break;
-            default:
-                init();
-        }
+            }
+            if (indicator === 2) {
+                db.query((`SELECT e.id, e.first_name, e.last_name, department.name AS department, 
+                role.title, role.salary, CONCAT(m.first_name, ' ', m.last_name) AS manager
+                    FROM ${table} e JOIN role ON e.role_id = role.id
+                    JOIN department ON role.department_id = department.id
+                    LEFT JOIN ${table} m ON m.id = e.manager_id ORDER BY manager`), (err, res) => {
+                    console.log('\n');
+                    res ? console.table(res) : console.log(err);
+                    init();
+                });
+            }
+            if (indicator === 3) {
+                db.query((`SELECT e.id, e.first_name, e.last_name, department.name AS department, 
+                role.title, role.salary, CONCAT(m.first_name, ' ', m.last_name) AS manager
+                    FROM ${table} e JOIN role ON e.role_id = role.id
+                    JOIN department ON role.department_id = department.id
+                    LEFT JOIN ${table} m ON m.id = e.manager_id ORDER BY department`), (err, res) => {
+                    console.log('\n');
+                    res ? console.table(res) : console.log(err);
+                    init();
+                });
+            }
+            break;
+        default:
+            init();
     }
 }
 
@@ -135,7 +156,15 @@ function addEmployee() { //update an employee
     });
 }
 
-function updateRole() { //update an employee
+function update(request) { //update an employee
+    let selectStmt, updateItem = ``;
+    if (request === `role`) {
+        selectStmt = `SELECT id, title FROM role`;
+        updateItem = `role_id`;
+    } else {
+        selectStmt = `SELECT id, first_name, last_name FROM employee`;
+        updateItem = `manager_id`
+    }
     db.query((`SELECT id, first_name, last_name FROM employee`), (err, res1) => {
         res1 ? console.log('Selecting Employee') : console.log(err);
         res1 = res1.map(function(element) { return element.id + ' ' + element.first_name + ' ' + element.last_name; })
@@ -146,19 +175,25 @@ function updateRole() { //update an employee
             choices: res1,
         }]).then(({ updateEmployee }) => {
             let employeeID = updateEmployee.split(' ')[0];
-            db.query((`SELECT id, title FROM role`), (err, res2) => {
-                res2 ? console.log('Choose New Role') : console.log(err);
-                res2 = res2.map(function(element) { return element.id + ' ' + element.title; })
+            db.query((selectStmt), (err, res2) => {
+                res2 ? console.log('Choose New Role/Manager') : console.log(err);
+                res2 = res2.map(function(element) {
+                    if (request === `role`) {
+                        return element.id + ' ' + element.title;
+                    } else {
+                        return element.id + ' ' + element.first_name + ' ' + element.last_name;
+                    }
+                })
                 return inquirer.prompt([{
                     type: 'list',
-                    name: 'newRole',
-                    message: 'Select their new role:',
+                    name: 'newUpdate',
+                    message: 'Select their new role or manager:',
                     choices: res2,
                     validate: eInput => { if (eInput) { return true; } else { return false; } }
-                }]).then(({ newRole }) => {
-                    let roleID = newRole.split(' ')[0];
-                    db.query(`UPDATE employee set role_id = '${roleID}' WHERE id = ${employeeID}`),
-                        (err, res3) => { res3 ? console.log(`Updating Employee Role`) : console.log(err); }
+                }]).then(({ newUpdate }) => {
+                    let updateID = newUpdate.split(' ')[0];
+                    db.query(`UPDATE employee set ${updateItem} = '${updateID}' WHERE id = ${employeeID}`),
+                        (err, res3) => { res3 ? console.log(`Updating Employee`) : console.log(err); }
                     viewAll(`employee`, 2)
                     init();
                 });
@@ -172,17 +207,17 @@ function init() { //prompt user to with choices they would like to preform
         type: 'list',
         name: 'options',
         message: 'What would you like to do?',
-        choices: ['View All Department', 'View All Roles', 'View All Employees', 'Add A Department', 'Add A Role', 'Add An Employee', 'Update An Employee Role', 'EXIT']
+        choices: ['View All Department', 'View All Roles', 'View All Employees', 'Add A Department', 'Add A Role', 'Add An Employee', 'Update An Employee Role', 'Update An Employee Manager', 'View Employee By Manager', 'View Employee By Department', 'EXIT']
     }]).then(({ options }) => {
         switch (options) { //selecting from the different choices
             case 'View All Department':
-                viewAll(`department`, 1);
+                viewAll(`department`, 0);
                 break;
             case 'View All Roles':
-                viewAll(`role`, 2);
+                viewAll(`role`, 0);
                 break;
             case 'View All Employees':
-                viewAll(`employee`, 2);
+                viewAll(`employee`, 1);
                 break;
             case 'Add A Department':
                 addDept();
@@ -194,7 +229,16 @@ function init() { //prompt user to with choices they would like to preform
                 addEmployee();
                 break;
             case 'Update An Employee Role':
-                updateRole();
+                update(`role`);
+                break;
+            case 'Update An Employee Manager':
+                update(`manager`);
+                break;
+            case 'View Employee By Manager':
+                viewAll(`employee`, 2);
+                break;
+            case 'View Employee By Department':
+                viewAll(`employee`, 3);
                 break;
             default:
                 console.log('END');
