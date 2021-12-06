@@ -21,5 +21,3 @@ VALUES
     ('Henry', 'Humor', 2, 4),
     ('Terry', 'Talkative', 1, 2),
     ('Rose', 'Rumor', 1, 2);
-
-DROP INDEX IF EXISTS ON TABLE;
