@@ -14,49 +14,36 @@ function viewAll(table, indicator) { //select all from a table
     switch (table) { //selecting from the different choices
         case `department`:
             db.query((`SELECT * FROM department`), (err, res) => {
-                console.log('\n');
-                res ? console.table(res) : console.log(err);
+                err ? console.log(err) : console.table(res);
                 init();
             });
+            break;
         case `role`:
             db.query((`SELECT role.id, role.title, role.salary, department.name AS department 
                 FROM ${table} LEFT JOIN department ON role.department_id = department.id`), (err, res) => {
-                console.log('\n');
-                res ? console.table(res) : console.log(err);
+                err ? console.log(err) : console.table(res);
                 init();
             });
             break;
         case `employee`:
-            if (indicator === 1) {
+            if (indicator != 1) {
+                let orderBy = `department`;
+                if (indicator === 2) { orderBy = `manager`; }
+                db.query((`SELECT e.id, e.first_name, e.last_name, department.name AS department, 
+                role.title, role.salary, CONCAT(m.first_name, ' ', m.last_name) AS manager
+                    FROM ${table} e JOIN role ON e.role_id = role.id
+                    JOIN department ON role.department_id = department.id
+                    LEFT JOIN ${table} m ON m.id = e.manager_id ORDER BY ${orderBy}`), (err, res) => {
+                    err ? console.log(err) : console.table(res);
+                    init();
+                });
+            } else {
                 db.query((`SELECT e.id, e.first_name, e.last_name, department.name AS department, 
                 role.title, role.salary, CONCAT(m.first_name, ' ', m.last_name) AS manager
                     FROM ${table} e JOIN role ON e.role_id = role.id
                     JOIN department ON role.department_id = department.id
                     LEFT JOIN ${table} m ON m.id = e.manager_id ORDER BY e.id`), (err, res) => {
-                    console.log('\n');
-                    res ? console.table(res) : console.log(err);
-                    init();
-                });
-            }
-            if (indicator === 2) {
-                db.query((`SELECT e.id, e.first_name, e.last_name, department.name AS department, 
-                role.title, role.salary, CONCAT(m.first_name, ' ', m.last_name) AS manager
-                    FROM ${table} e JOIN role ON e.role_id = role.id
-                    JOIN department ON role.department_id = department.id
-                    LEFT JOIN ${table} m ON m.id = e.manager_id ORDER BY manager`), (err, res) => {
-                    console.log('\n');
-                    res ? console.table(res) : console.log(err);
-                    init();
-                });
-            }
-            if (indicator === 3) {
-                db.query((`SELECT e.id, e.first_name, e.last_name, department.name AS department, 
-                role.title, role.salary, CONCAT(m.first_name, ' ', m.last_name) AS manager
-                    FROM ${table} e JOIN role ON e.role_id = role.id
-                    JOIN department ON role.department_id = department.id
-                    LEFT JOIN ${table} m ON m.id = e.manager_id ORDER BY department`), (err, res) => {
-                    console.log('\n');
-                    res ? console.table(res) : console.log(err);
+                    err ? console.log(err) : console.table(res);
                     init();
                 });
             }
@@ -74,7 +61,7 @@ function addDept() { //add a new department (name)
         validate: deptInput => { if (deptInput) { return true; } else { return false; } }
     }]).then(({ addDept }) => {
         db.query(`INSERT INTO department (name) VALUES ('${addDept}')`), (err, res) => {
-            res ? console.log(`Added Department: ${addDept}`) : console.log(err);
+            err ? console.log(err) : console.log(`Added Department: ${addDept}`);
         }
         viewAll(`department`, 1);
     })
@@ -82,8 +69,8 @@ function addDept() { //add a new department (name)
 
 function addRole() { //add a new role (role, salary, department_id it belongs to)
     db.query((`SELECT id, name FROM department`), (err, res) => {
-        res = res.map(function(element) { return element.id + ' ' + element.name; })
-        res ? console.log('Add ') : console.log(err);
+        res = res.map(function(item) { return item.id + ' ' + item.name; })
+        err ? console.log(err) : console.log('Adding A New Role');
         return inquirer.prompt([{ //inquirer prompts for role inputs
                 type: 'input',
                 name: 'role',
@@ -106,8 +93,8 @@ function addRole() { //add a new role (role, salary, department_id it belongs to
         ]).then(({ role, salary, deptID }) => { //inserting the input to the role table
             let dID = deptID.split(' ')[0];
             db.query(`INSERT INTO role (title, salary, department_id ) VALUES ('${role}', ${salary}, ${dID})`),
-                (err, res) => { res ? console.log(`Added Role: ${role}`) : console.log(err); }
-            viewAll(`role`, 2);
+                (err, res) => { err ? console.log(err) : console.log(`Added Role: ${role}`); }
+            viewAll(`role`, 1);
         });
     });
 }
@@ -147,8 +134,8 @@ function addEmployee() { //update an employee
                 }]).then(({ first_name, last_name, eRole, eManager }) => {
                     let managerID = eManager.split(' ')[0];
                     db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id ) VALUES ('${fName}', '${lName}', ${roleID}, ${managerID})`),
-                        (err, res3) => { res3 ? viewAll(`employee`, 1) : console.log(err); }
-                    viewAll(`employee`, 2);
+                        (err, res3) => { res3 ? console.log('Finish Adding Employee') : console.log(err); }
+                    viewAll(`employee`, 1);
                     init();
                 });
             });
@@ -163,11 +150,11 @@ function update(request) { //update an employee
         updateItem = `role_id`;
     } else {
         selectStmt = `SELECT id, first_name, last_name FROM employee`;
-        updateItem = `manager_id`
+        updateItem = `manager_id`;
     }
     db.query((`SELECT id, first_name, last_name FROM employee`), (err, res1) => {
         res1 ? console.log('Selecting Employee') : console.log(err);
-        res1 = res1.map(function(element) { return element.id + ' ' + element.first_name + ' ' + element.last_name; })
+        res1 = res1.map(function(item) { return item.id + ' ' + item.first_name + ' ' + item.last_name; })
         return inquirer.prompt([{
             type: 'list',
             name: 'updateEmployee',
@@ -177,11 +164,11 @@ function update(request) { //update an employee
             let employeeID = updateEmployee.split(' ')[0];
             db.query((selectStmt), (err, res2) => {
                 res2 ? console.log('Choose New Role/Manager') : console.log(err);
-                res2 = res2.map(function(element) {
+                res2 = res2.map(function(item) {
                     if (request === `role`) {
-                        return element.id + ' ' + element.title;
+                        return item.id + ' ' + item.title;
                     } else {
-                        return element.id + ' ' + element.first_name + ' ' + element.last_name;
+                        return item.id + ' ' + item.first_name + ' ' + item.last_name;
                     }
                 })
                 return inquirer.prompt([{
@@ -202,12 +189,41 @@ function update(request) { //update an employee
     });
 }
 
+function deleteOpt(table) { //add a new department (name)
+    let selection = ``;
+    if (table === `role`) { selection = `id, title`; }
+    if (table === `department`) { selection = `id, name`; }
+    if (table === `employee`) { selection = `id, first_name, last_name`; }
+    db.query((`SELECT ${selection} FROM ${table}`), (err, res1) => {
+        res1 ? console.log('Delete From This List') : console.log(err);
+        res1 = res1.map(function(item) { console.log(item); })
+        return inquirer.prompt([{
+            type: 'list',
+            name: 'delOpt',
+            message: 'Select an employee to update their role:',
+            choices: res1,
+        }]).then(({ delOpt }) => {
+            delOpt = delOpt.id;
+            db.query(`DELETE FROM ${table} WHERE id =${delOpt}`),
+                (err, res2) => {
+                    res2 ? console.log('Choose New Role/Manager') : console.log(err);
+                }
+            viewAll(`${table}`, 2);
+            init();
+        });
+    });
+}
+
 function init() { //prompt user to with choices they would like to preform
     inquirer.prompt([{
         type: 'list',
         name: 'options',
         message: 'What would you like to do?',
-        choices: ['View All Department', 'View All Roles', 'View All Employees', 'Add A Department', 'Add A Role', 'Add An Employee', 'Update An Employee Role', 'Update An Employee Manager', 'View Employee By Manager', 'View Employee By Department', 'EXIT']
+        choices: ['View All Department', 'View All Roles', 'View All Employees', 'Add A Department',
+            'Add A Role', 'Add An Employee', 'Update An Employee Role', 'Update An Employee Manager',
+            'View Employee By Manager', 'View Employee By Department', 'Delete A Department',
+            'Delete A Role', 'Delete An Employee', 'EXIT'
+        ]
     }]).then(({ options }) => {
         switch (options) { //selecting from the different choices
             case 'View All Department':
@@ -239,6 +255,15 @@ function init() { //prompt user to with choices they would like to preform
                 break;
             case 'View Employee By Department':
                 viewAll(`employee`, 3);
+                break;
+            case 'Delete A Department':
+                deleteOpt(`department`);
+                break;
+            case 'Delete A Role':
+                deleteOpt(`role`);
+                break;
+            case 'Delete An Employee':
+                deleteOpt(`employee`);
                 break;
             default:
                 console.log('END');
