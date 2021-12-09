@@ -101,8 +101,8 @@ function addRole() { //add a new role (role, salary, department_id it belongs to
 
 function addEmployee() { //update an employee
     db.query((`SELECT id, title FROM role`), (err, res) => {
+        err ? console.log(err) : console.log('To Add Employee');
         res = res.map(function(element) { return element.id + ' ' + element.title; })
-        res ? console.log('To Add Employee') : console.log(err);
         return inquirer.prompt([{
                 type: 'input',
                 name: 'fName',
@@ -124,17 +124,18 @@ function addEmployee() { //update an employee
         ]).then(({ fName, lName, eRole }) => {
             let roleID = eRole.split(' ')[0];
             db.query((`SELECT id, first_name, last_name FROM employee`), (err, res2) => {
-                res2 ? console.log('Select Manager') : console.log(err);
+                err ? console.log(err) : console.log('Select Manager');
                 res2 = res2.map(function(element) { return element.id + ' ' + element.first_name + ' ' + element.last_name; })
                 return inquirer.prompt([{
                     type: 'list',
                     name: 'eManager',
                     message: 'Select their manager: ',
                     choices: res2,
-                }]).then(({ first_name, last_name, eRole, eManager }) => {
+                }]).then(({ eManager }) => {
                     let managerID = eManager.split(' ')[0];
-                    db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id ) VALUES ('${fName}', '${lName}', ${roleID}, ${managerID})`),
-                        (err, res3) => { res3 ? console.log('Finish Adding Employee') : console.log(err); }
+                    db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id ) 
+                            VALUES ('${fName}', '${lName}', ${roleID}, ${managerID})`),
+                        (err, res3) => { err ? console.log(err) : console.log('Finish Adding Employee'); }
                     viewAll(`employee`, 1);
                     init();
                 });
@@ -142,6 +143,7 @@ function addEmployee() { //update an employee
         })
     });
 }
+
 
 function update(request) { //update an employee
     let selectStmt, updateItem = ``;
@@ -163,7 +165,7 @@ function update(request) { //update an employee
         }]).then(({ updateEmployee }) => {
             let employeeID = updateEmployee.split(' ')[0];
             db.query((selectStmt), (err, res2) => {
-                res2 ? console.log('Choose New Role/Manager') : console.log(err);
+                err ? console.log(err) : console.log(`Choose A New ${request}`);
                 res2 = res2.map(function(item) {
                     if (request === `role`) {
                         return item.id + ' ' + item.title;
@@ -182,7 +184,6 @@ function update(request) { //update an employee
                     db.query(`UPDATE employee set ${updateItem} = '${updateID}' WHERE id = ${employeeID}`),
                         (err, res3) => { res3 ? console.log(`Updating Employee`) : console.log(err); }
                     viewAll(`employee`, 2)
-                    init();
                 });
             });
         })
@@ -195,21 +196,22 @@ function deleteOpt(table) { //add a new department (name)
     if (table === `department`) { selection = `id, name`; }
     if (table === `employee`) { selection = `id, first_name, last_name`; }
     db.query((`SELECT ${selection} FROM ${table}`), (err, res1) => {
-        res1 ? console.log('Delete From This List') : console.log(err);
-        res1 = res1.map(function(item) { console.log(item); })
+        err ? console.log(err) : console.log('Delete From This List');
+        res1 = res1.map(function(item) {
+            if (table === `role`) { return item.id + ' ' + item.title; }
+            if (table === `department`) { return item.id + ' ' + item.name; }
+            if (table === `employee`) { return item.id + ' ' + item.first_name + ' ' + item.last_name; }
+        })
         return inquirer.prompt([{
             type: 'list',
             name: 'delOpt',
-            message: 'Select an employee to update their role:',
+            message: `Delete your ${table}`,
             choices: res1,
         }]).then(({ delOpt }) => {
-            delOpt = delOpt.id;
-            db.query(`DELETE FROM ${table} WHERE id =${delOpt}`),
-                (err, res2) => {
-                    res2 ? console.log('Choose New Role/Manager') : console.log(err);
-                }
-            viewAll(`${table}`, 2);
-            init();
+            let deleteID = delOpt.split(' ')[0];
+            db.query(`DELETE FROM ${table} WHERE id =${deleteID}`),
+                (err, res2) => { err ? console.log(err) : console.log(`${table} has been deleted`); }
+            viewAll(`${table}`, 1);
         });
     });
 }
