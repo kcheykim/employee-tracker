@@ -93,6 +93,7 @@ function addRole() { //add a new role (role, salary, department_id it belongs to
                 message: 'What department does the role belong to?',
                 validate: deptIDInput => { if (deptIDInput) { return true; } else { return false; } }
             },
+
         ]).then(({ role, salary, deptID }) => { //inserting the input to the role table
             let dID = deptID.split(' ')[0];
             db.query(`INSERT INTO role (title, salary, department_id ) VALUES ('${role}', ${salary}, ${dID})`),
@@ -146,7 +147,6 @@ function addEmployee() { //add an employee
         })
     });
 }
-
 
 function update(request) { //update an employee's role or manager
     let selectStmt, updateItem = ``;
