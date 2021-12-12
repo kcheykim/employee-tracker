@@ -141,7 +141,6 @@ function addEmployee() { //add an employee
                             VALUES ('${fName}', '${lName}', ${roleID}, ${managerID})`),
                         (err, res3) => { err ? console.log(err) : console.log('Finish Adding Employee'); }
                     viewAll(`employee`, 1); //output table with new employee
-                    init();
                 });
             });
         })
