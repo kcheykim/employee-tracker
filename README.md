@@ -24,6 +24,7 @@ The Get To Know Your Coworker application allows the user to easily view and int
 `mysql> source db/schema.sql;`
 `mysql> source db/seeds.sql;`
 `$npm init -y`
+`$npm install`
 `$npm start`
 
 ## Usage
