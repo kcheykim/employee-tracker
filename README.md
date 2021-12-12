@@ -29,8 +29,8 @@ The Get To Know Your Coworker application allows the user to easily view and int
 
 ## Usage
 Here are the images and links of the pages: <br />
-![note-taker-landing](./public/assets/images/note-taker-landing.png?raw=true)
-https://sleepy-cove-15810.herokuapp.com/
+![get-to-know-your-coworker](./assets/images/get-to-know-your-coworker.gif?raw=true)<br />
+https://watch.screencastify.com/v/fALfVvEIO9e1dXGNOwmN
 
 ## Credits
 Here are the list of collaborators:  
