@@ -105,8 +105,10 @@ function addRole() { //add a new role (role, salary, department_id it belongs to
 
 function addEmployee() { //add an employee
     db.query((`SELECT id, title FROM role`), (err, res) => {
-        err ? console.log(err) : console.log('To Add Employee');
-        res = res.map(function(element) { return element.id + ' ' + element.title; })
+        err ? console.log(err) : console.log('Adding An Employee');
+        res = res.map(function(element) {
+            return element.id + ' ' + element.title;
+        })
         return inquirer.prompt([{ //prompt for employee info
                 type: 'input',
                 name: 'fName',
@@ -141,7 +143,6 @@ function addEmployee() { //add an employee
                             VALUES ('${fName}', '${lName}', ${roleID}, ${managerID})`),
                         (err, res3) => { err ? console.log(err) : console.log('Finish Adding Employee'); }
                     viewAll(`employee`, 1); //output table with new employee
-                    init();
                 });
             });
         })
